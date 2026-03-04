@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+backend/venv/
+backend/new_venv/
+backend/__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# Build outputs
+frontend/dist/
+
+# OS/Editor
+.DS_Store
+.vscode/
+
+# Vector database (if any local storage)
+backend/faiss_index/
