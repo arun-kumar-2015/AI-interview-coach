@@ -16,6 +16,14 @@ Author: AI Interview Coach Team
 
 from typing import List, Union
 import numpy as np
+class EmbeddingService:
+    """
+    Service for generating text embeddings using sentence-transformers.
+    
+    Uses a lightweight but effective model for semantic similarity.
+    The model captures contextual meaning of text.
+    """
+    
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         """
         Initialize the embedding service.
