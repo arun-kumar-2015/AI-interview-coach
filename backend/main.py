@@ -80,17 +80,27 @@ async def lifespan(app: FastAPI):
     global embedding_service, vector_store, llm_service
     
     print("🚀 Starting Smart AI Interview Coach Backend...")
+    print(f"DEBUG: Port: {os.getenv('PORT', '8000')}")
     
-    # Initialize embedding service
-    embedding_service = EmbeddingService()
-    
-    # Initialize vector store
-    vector_store = VectorStore(embedding_service)
-    
-    # Initialize LLM service
-    llm_service = LLMService()
-    
-    print("✅ All services initialized successfully!")
+    try:
+        # Initialize embedding service
+        print("DEBUG: Initializing Embedding Service...")
+        embedding_service = EmbeddingService()
+        
+        # Initialize vector store
+        print("DEBUG: Initializing Vector Store...")
+        vector_store = VectorStore(embedding_service)
+        
+        # Initialize LLM service
+        print("DEBUG: Initializing LLM Service...")
+        llm_service = LLMService()
+        
+        print("✅ All services initialized successfully!")
+    except Exception as e:
+        print(f"❌ ERROR DURING STARTUP: {str(e)}")
+        # In some cases we might want to still start but show errors on health check
+        # But for Render, failing fast is better so logs show what's wrong
+        raise e
     
     yield
     
@@ -132,14 +142,22 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS - Allow all origins for development
+# Configure CORS
+# Note: For production with allow_credentials=True, we should be specific or use allow_origin_regex
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify actual origins
+    allow_origins=[
+        "http://localhost:3000",
+        "https://ai-interview-coach-kwkg.vercel.app",
+        "https://ai-interview-coach-kwkg-git-main-arun-kumar-2015s-projects.vercel.app" # branch preview
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Optional: Add a catch-all origin handler if needed, or stick to the above for security
+# For now, let's keep it specific so allow_credentials works.
 
 
 # ==================== Health Check ====================
