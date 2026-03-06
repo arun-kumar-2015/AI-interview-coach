@@ -55,39 +55,8 @@ from services.vector_store import VectorStore
 from services.llm_service import LLMService
 
 
-# Global services (will be initialized lazily)
-_embedding_service: Optional[EmbeddingService] = None
-_vector_store: Optional[VectorStore] = None
-_llm_service: Optional[LLMService] = None
-
-def get_embedding_service() -> EmbeddingService:
-    global _embedding_service
-    if _embedding_service is None:
-        print("📥 Lazy LOADING Embedding Service...")
-        _embedding_service = EmbeddingService()
-    return _embedding_service
-
-def get_vector_store() -> VectorStore:
-    global _vector_store
-    if _vector_store is None:
-        print("📥 Lazy LOADING Vector Store...")
-        _vector_store = VectorStore(get_embedding_service())
-    return _vector_store
-
-def get_llm_service() -> LLMService:
-    global _llm_service
-    if _llm_service is None:
-        print("📥 Lazy LOADING LLM Service...")
-        _llm_service = LLMService()
-    return _llm_service
-
-# Deprecated aliases for compatibility with existing code
-embedding_service = None
-vector_store = None
-llm_service = None
-
-# Store resumes in memory (in production, use a database)
-resumes_db: Dict[str, Dict[str, Any]] = {}
+# Import state and services
+from app_state import get_embedding_service, get_vector_store, get_llm_service, resumes_db
 
 
 @asynccontextmanager
@@ -176,11 +145,7 @@ async def health_check():
     """
     return {
         "status": "healthy",
-        "services": {
-            "embedding_service": "initialized" if embedding_service else "not initialized",
-            "vector_store": "initialized" if vector_store else "not initialized",
-            "llm_service": "initialized" if llm_service else "not initialized"
-        }
+        "message": "API is responding"
     }
 
 

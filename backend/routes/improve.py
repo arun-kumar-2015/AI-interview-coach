@@ -115,7 +115,7 @@ async def improve_resume(request: ResumeImprovementRequest):
     Returns:
         ResumeImprovementResponse with detailed improvement suggestions
     """
-    from main import resumes_db, get_llm_service
+    from app_state import resumes_db, get_llm_service
     
     llm_service = get_llm_service()
     

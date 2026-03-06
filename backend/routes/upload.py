@@ -113,7 +113,8 @@ async def upload_resume(
         
         # Get global services from main app
         # Note: In production, use proper dependency injection
-        from main import get_vector_store, get_embedding_service, resumes_db
+        # Get global services from app_state
+        from app_state import get_vector_store, get_embedding_service, resumes_db
         
         vector_store = get_vector_store()
         embedding_service = get_embedding_service()
@@ -187,7 +188,7 @@ async def get_session_info(session_id: str):
     Returns:
         SessionResponse: Session details
     """
-    from main import resumes_db
+    from app_state import resumes_db
     
     if session_id not in resumes_db:
         raise HTTPException(
@@ -215,7 +216,8 @@ async def delete_session(session_id: str):
     Returns:
         Success message
     """
-    from main import resumes_db, vector_store
+    from app_state import resumes_db, get_vector_store
+    vector_store = get_vector_store()
     
     if session_id not in resumes_db:
         raise HTTPException(

@@ -29,8 +29,8 @@ async def evaluate_video_interview(request: VideoInterviewRequest):
     returns structured JSON feedback.
     """
     try:
-        # Use the global lazy-loading LLM service from main
-        from main import get_llm_service
+        # Use the global lazy-loading LLM service from app_state
+        from app_state import get_llm_service
         llm = get_llm_service()
         
         system_prompt = f"""

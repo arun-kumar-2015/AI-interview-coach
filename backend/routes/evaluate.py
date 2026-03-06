@@ -96,7 +96,7 @@ async def evaluate_answer(request: EvaluationRequest):
     Returns:
         EvaluationResponse with score, breakdown, and feedback
     """
-    from main import resumes_db, get_llm_service
+    from app_state import resumes_db, get_llm_service
     
     llm_service = get_llm_service()
     
@@ -186,7 +186,7 @@ async def generate_followup_question(request: EvaluationRequest):
     Returns:
         FollowUpResponse with question and reasoning
     """
-    from main import get_llm_service
+    from app_state import get_llm_service
     
     llm_service = get_llm_service()
     

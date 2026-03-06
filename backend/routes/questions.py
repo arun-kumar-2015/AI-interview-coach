@@ -93,7 +93,7 @@ async def generate_technical_questions(request: QuestionGenerationRequest):
     Raises:
         HTTPException: If session not found or generation fails
     """
-    from main import resumes_db, get_vector_store, get_llm_service
+    from app_state import resumes_db, get_vector_store, get_llm_service
     
     vector_store = get_vector_store()
     llm_service = get_llm_service()
@@ -173,7 +173,7 @@ async def analyze_resume(session_id: str):
     Returns:
         ResumeAnalysisResponse with structured resume analysis
     """
-    from main import resumes_db, get_llm_service
+    from app_state import resumes_db, get_llm_service
     
     llm_service = get_llm_service()
     
