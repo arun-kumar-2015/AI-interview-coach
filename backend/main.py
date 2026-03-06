@@ -55,65 +55,52 @@ from services.vector_store import VectorStore
 from services.llm_service import LLMService
 
 
-# Global services (will be initialized on startup)
-embedding_service: Optional[EmbeddingService] = None
-vector_store: Optional[VectorStore] = None
-llm_service: Optional[LLMService] = None
+# Global services (will be initialized lazily)
+_embedding_service: Optional[EmbeddingService] = None
+_vector_store: Optional[VectorStore] = None
+_llm_service: Optional[LLMService] = None
+
+def get_embedding_service() -> EmbeddingService:
+    global _embedding_service
+    if _embedding_service is None:
+        print("📥 Lazy LOADING Embedding Service...")
+        _embedding_service = EmbeddingService()
+    return _embedding_service
+
+def get_vector_store() -> VectorStore:
+    global _vector_store
+    if _vector_store is None:
+        print("📥 Lazy LOADING Vector Store...")
+        _vector_store = VectorStore(get_embedding_service())
+    return _vector_store
+
+def get_llm_service() -> LLMService:
+    global _llm_service
+    if _llm_service is None:
+        print("📥 Lazy LOADING LLM Service...")
+        _llm_service = LLMService()
+    return _llm_service
+
+# Deprecated aliases for compatibility with existing code
+embedding_service = None
+vector_store = None
+llm_service = None
 
 # Store resumes in memory (in production, use a database)
-resumes_db: Dict[str, Dict[str, Any]] = {
-    "test-session-123": {
-        "filename": "test_resume.pdf",
-        "raw_text": "Software Engineer with 5 years experience in Python and React.",
-        "cleaned_text": "Software Engineer with 5 years experience in Python and React. Skills: Python, React, FastAPI, SQL. Experience: Senior Engineer at TechCorp (2020-Present), Junior Developer at WebSoft (2018-2020).",
-        "sections": [
-            {"name": "Summary", "content": "Software Engineer with 5 years experience in Python and React."},
-            {"name": "Skills", "content": "Python, React, FastAPI, SQL."},
-            {"name": "Experience", "content": "Senior Engineer at TechCorp (2020-Present), Junior Developer at WebSoft (2018-2020)."}
-        ],
-        "job_role": "Software Engineer",
-        "uploaded_at": "2024-01-01T00:00:00"
-    }
-}
+resumes_db: Dict[str, Dict[str, Any]] = {}
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Lifespan context manager for startup and shutdown events.
-    Initializes services on startup.
+    Lifespan context manager.
+    Starts immediately to avoid Render timeouts.
+    Services load on first request.
     """
-    global embedding_service, vector_store, llm_service
-    
-    print("🚀 Starting Smart AI Interview Coach Backend...")
-    print(f"DEBUG: Port: {os.getenv('PORT', 'Unknown')}")
-    
-    try:
-        # Initialize embedding service
-        print("DEBUG: Initializing Embedding Service (this might take a minute)...")
-        embedding_service = EmbeddingService()
-        print("DEBUG: Embedding Service Loaded.")
-        
-        # Initialize vector store
-        print("DEBUG: Initializing Vector Store...")
-        vector_store = VectorStore(embedding_service)
-        
-        # Initialize LLM service
-        print("DEBUG: Initializing LLM Service...")
-        llm_service = LLMService()
-        
-        print("✅ All services initialized successfully!")
-    except Exception as e:
-        print(f"❌ ERROR DURING STARTUP: {str(e)}")
-        # In some cases we might want to still start but show errors on health check
-        # But for Render, failing fast is better so logs show what's wrong
-        raise e
-    
+    print("🚀 Smart AI Interview Coach Backend is READY!")
+    print(f"DEBUG: Listening on PORT: {os.getenv('PORT', '8000')}")
     yield
-    
-    # Cleanup on shutdown
     print("🛑 Shutting down...")
-    resumes_db.clear()
 
 
 # Create FastAPI app

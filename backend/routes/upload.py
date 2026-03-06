@@ -113,7 +113,10 @@ async def upload_resume(
         
         # Get global services from main app
         # Note: In production, use proper dependency injection
-        from main import vector_store, embedding_service, resumes_db
+        from main import get_vector_store, get_embedding_service, resumes_db
+        
+        vector_store = get_vector_store()
+        embedding_service = get_embedding_service()
         
         if not vector_store or not embedding_service:
             raise HTTPException(

@@ -93,7 +93,10 @@ async def generate_technical_questions(request: QuestionGenerationRequest):
     Raises:
         HTTPException: If session not found or generation fails
     """
-    from main import resumes_db, vector_store, llm_service
+    from main import resumes_db, get_vector_store, get_llm_service
+    
+    vector_store = get_vector_store()
+    llm_service = get_llm_service()
     
     # Validate session
     if request.session_id not in resumes_db:
@@ -170,7 +173,9 @@ async def analyze_resume(session_id: str):
     Returns:
         ResumeAnalysisResponse with structured resume analysis
     """
-    from main import resumes_db, llm_service
+    from main import resumes_db, get_llm_service
+    
+    llm_service = get_llm_service()
     
     # Validate session
     if session_id not in resumes_db:
@@ -243,7 +248,10 @@ async def get_skill_questions(
     Returns:
         Questions focused on the specific skill
     """
-    from main import resumes_db, vector_store, llm_service
+    from main import resumes_db, get_vector_store, get_llm_service
+    
+    vector_store = get_vector_store()
+    llm_service = get_llm_service()
     
     # Validate session
     if session_id not in resumes_db:

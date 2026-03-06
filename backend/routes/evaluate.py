@@ -96,7 +96,9 @@ async def evaluate_answer(request: EvaluationRequest):
     Returns:
         EvaluationResponse with score, breakdown, and feedback
     """
-    from main import resumes_db, llm_service
+    from main import resumes_db, get_llm_service
+    
+    llm_service = get_llm_service()
     
     # Validate session
     if request.session_id not in resumes_db:
@@ -184,7 +186,9 @@ async def generate_followup_question(request: EvaluationRequest):
     Returns:
         FollowUpResponse with question and reasoning
     """
-    from main import llm_service
+    from main import get_llm_service
+    
+    llm_service = get_llm_service()
     
     if not llm_service:
         raise HTTPException(

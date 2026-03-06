@@ -115,7 +115,9 @@ async def improve_resume(request: ResumeImprovementRequest):
     Returns:
         ResumeImprovementResponse with detailed improvement suggestions
     """
-    from main import resumes_db, llm_service
+    from main import resumes_db, get_llm_service
+    
+    llm_service = get_llm_service()
     
     # Validate session
     if request.session_id not in resumes_db:
@@ -212,7 +214,9 @@ async def check_ats_compatibility(session_id: str):
     Returns:
         ATSCheckResponse with ATS compatibility analysis
     """
-    from main import resumes_db, llm_service
+    from main import resumes_db, get_llm_service
+    
+    llm_service = get_llm_service()
     
     # Validate session
     if session_id not in resumes_db:

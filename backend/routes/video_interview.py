@@ -29,9 +29,9 @@ async def evaluate_video_interview(request: VideoInterviewRequest):
     returns structured JSON feedback.
     """
     try:
-        # We can grab a fresh instance or the global one.
-        # It's quick to instantiate if we just need the client.
-        llm = LLMService()
+        # Use the global lazy-loading LLM service from main
+        from main import get_llm_service
+        llm = get_llm_service()
         
         system_prompt = f"""
 You are a professional corporate employer conducting a real-time job interview for a {request.role} position.

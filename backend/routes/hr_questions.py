@@ -87,7 +87,9 @@ async def generate_hr_questions(request: HRQuestionGenerationRequest):
     Returns:
         HRQuestionsResponse with list of behavioral questions
     """
-    from main import resumes_db, llm_service
+    from main import resumes_db, get_llm_service
+    
+    llm_service = get_llm_service()
     
     # Validate session
     if request.session_id not in resumes_db:
@@ -170,7 +172,9 @@ async def generate_leadership_questions(
     Returns:
         LeadershipQuestionsResponse with leadership-focused questions
     """
-    from main import resumes_db, llm_service
+    from main import resumes_db, get_llm_service
+    
+    llm_service = get_llm_service()
     
     # Validate session
     if session_id not in resumes_db:
