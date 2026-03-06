@@ -27,6 +27,12 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+print("DEBUG: main.py started")
+import sys
+print(f"DEBUG: Python path: {sys.path}")
+print(f"DEBUG: Current directory: {os.getcwd()}")
+print(f"DEBUG: Environment PORT: {os.getenv('PORT')}")
+
 # FastAPI imports
 from fastapi import FastAPI, UploadFile, File, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -80,12 +86,13 @@ async def lifespan(app: FastAPI):
     global embedding_service, vector_store, llm_service
     
     print("🚀 Starting Smart AI Interview Coach Backend...")
-    print(f"DEBUG: Port: {os.getenv('PORT', '8000')}")
+    print(f"DEBUG: Port: {os.getenv('PORT', 'Unknown')}")
     
     try:
         # Initialize embedding service
-        print("DEBUG: Initializing Embedding Service...")
+        print("DEBUG: Initializing Embedding Service (this might take a minute)...")
         embedding_service = EmbeddingService()
+        print("DEBUG: Embedding Service Loaded.")
         
         # Initialize vector store
         print("DEBUG: Initializing Vector Store...")
@@ -229,13 +236,15 @@ async def general_exception_handler(request, exc: Exception):
 if __name__ == "__main__":
     import uvicorn
     
-    # Get configuration
-    host = os.getenv("HOST", "0.0.0.0")
+    # Get configuration from environment (Render sets PORT automatically)
+    host = "0.0.0.0"
     port = int(os.getenv("PORT", "8000"))
+    
+    print(f"DEBUG: Internal Uvicorn starting on {host}:{port}")
     
     uvicorn.run(
         "main:app",
         host=host,
         port=port,
-        reload=True
+        reload=False  # Disable reload in production for stability
     )
