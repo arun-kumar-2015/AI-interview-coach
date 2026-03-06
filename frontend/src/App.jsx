@@ -9,6 +9,7 @@ import ResumeImprovement from './pages/ResumeImprovement';
 import VideoInterviewPage from './pages/VideoInterviewPage';
 import Loading from './components/Loading';
 import Error from './components/Error';
+import InstallPrompt from './components/InstallPrompt';
 
 function App() {
   const [sessionId, setSessionId] = useState(null);
@@ -111,6 +112,9 @@ function App() {
             onClose={() => setError(null)}
           />
         )}
+
+        {/* PWA Install Prompt */}
+        <InstallPrompt />
       </div>
     </Router>
   );
