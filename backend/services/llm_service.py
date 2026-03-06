@@ -22,7 +22,6 @@ Author: AI Interview Coach Team
 import os
 import json
 from typing import Optional, List, Dict, Any
-from openai import OpenAI
 
 
 class LLMService:
@@ -51,6 +50,9 @@ class LLMService:
             default_temperature: Default temperature for generations
             default_max_tokens: Default max tokens for response
         """
+        # Local import to prevent loading during app startup
+        from openai import OpenAI
+        
         # Get API configuration - use provided key or from environment
         self.api_key = api_key or os.getenv("OPENAI_API_KEY") or "ollama"
         self.base_url = base_url or os.getenv("OPENAI_BASE_URL", "http://localhost:11434/v1")

@@ -18,7 +18,7 @@ Author: AI Interview Coach Team
 
 from typing import List, Tuple, Optional, Dict, Any
 import numpy as np
-import faiss
+import numpy as np
 import pickle
 from pathlib import Path
 
@@ -38,6 +38,11 @@ class VectorStore:
         Args:
             embedding_service: Service for generating text embeddings
         """
+        # Local import to prevent heavy loading during application startup
+        print("📥 Importing faiss...")
+        import faiss
+        self.faiss = faiss
+        
         self.embedding_service = embedding_service
         self.dimension = embedding_service.get_embedding_dimension()
         
@@ -56,7 +61,7 @@ class VectorStore:
         """
         # Use IndexFlatIP for inner product (cosine similarity with normalized vectors)
         # For cosine similarity, we use Inner Product with L2 normalized vectors
-        index = faiss.IndexFlatIP(self.dimension)
+        index = self.faiss.IndexFlatIP(self.dimension)
         
         self.indexes[session_id] = {
             'index': index,

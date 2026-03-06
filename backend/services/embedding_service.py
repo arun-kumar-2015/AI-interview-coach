@@ -16,17 +16,6 @@ Author: AI Interview Coach Team
 
 from typing import List, Union
 import numpy as np
-from sentence_transformers import SentenceTransformer
-
-
-class EmbeddingService:
-    """
-    Service for generating text embeddings using sentence-transformers.
-    
-    Uses a lightweight but effective model for semantic similarity.
-    The model captures contextual meaning of text.
-    """
-    
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         """
         Initialize the embedding service.
@@ -35,6 +24,10 @@ class EmbeddingService:
             model_name: Name of the sentence-transformer model to use
                        'all-MiniLM-L6-v2' is a good balance of speed and quality
         """
+        # Local import to prevent heavy loading during application startup
+        print("📥 Importing sentence_transformers (this may take a minute)...")
+        from sentence_transformers import SentenceTransformer
+        
         self.model_name = model_name
         print(f"📥 Loading embedding model: {model_name}")
         self.model = SentenceTransformer(model_name)
