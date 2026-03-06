@@ -49,10 +49,8 @@ from routes.hr_questions import router as hr_questions_router
 from routes.improve import router as improve_router
 from routes.video_interview import router as video_interview_router
 
-# Import services for initialization
-from services.embedding_service import EmbeddingService
-from services.vector_store import VectorStore
-from services.llm_service import LLMService
+# Services are accessed lazily via app_state
+pass
 
 
 # Import state and services

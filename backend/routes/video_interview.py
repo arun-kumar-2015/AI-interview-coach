@@ -3,10 +3,8 @@ from pydantic import BaseModel
 import ast
 import json
 
-# Assuming we can import the globally initialized llm_service from main
-# Alternatively, we could instantiate a service here or pass it in.
-# For simplicity, we'll try to get it from the app state or simply re-import it.
-from services.llm_service import LLMService
+# Services are loaded lazily
+pass
 
 router = APIRouter()
 

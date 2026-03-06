@@ -15,10 +15,8 @@ from typing import Optional
 from fastapi import APIRouter, UploadFile, File, HTTPException, status
 from pydantic import BaseModel
 
-# Import services
-from services.pdf_service import PDFService
-from services.vector_store import VectorStore
-from services.embedding_service import EmbeddingService
+# Services are loaded lazily within the routes
+pass
 
 # Import main app globals
 # Note: In production, use dependency injection
@@ -96,6 +94,7 @@ async def upload_resume(
         
         # Extract text from PDF
         print(f"📄 Extracting text from PDF: {file.filename}")
+        from services.pdf_service import PDFService
         raw_text = PDFService.extract_text_from_pdf(file_content)
         
         if not raw_text or len(raw_text.strip()) < 100:
