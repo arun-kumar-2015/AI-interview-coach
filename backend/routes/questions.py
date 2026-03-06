@@ -248,7 +248,7 @@ async def get_skill_questions(
     Returns:
         Questions focused on the specific skill
     """
-    from main import resumes_db, get_vector_store, get_llm_service
+    from app_state import resumes_db, get_vector_store, get_llm_service
     
     vector_store = get_vector_store()
     llm_service = get_llm_service()
