@@ -25,51 +25,32 @@ from pathlib import Path
 
 class VectorStore:
     """
-    FAISS-based vector store for semantic similarity search.
+    Pure Numpy vector store for semantic similarity search.
     
-    Manages multiple resume indexes, each identified by a unique session ID.
-    Supports adding text with embeddings and searching for similar text.
+    Uses cosine similarity for retrieval without needing heavy FAISS.
     """
     
     def __init__(self, embedding_service):
         """
         Initialize the vector store.
-        
-        Args:
-            embedding_service: Service for generating text embeddings
         """
-        # Local import to prevent heavy loading during application startup
-        print("📥 Importing faiss...")
-        import faiss
-        self.faiss = faiss
-        
         self.embedding_service = embedding_service
-        self.dimension = embedding_service.get_embedding_dimension()
-        
         # Dictionary to store multiple indexes (one per resume/session)
-        # Key: session_id, Value: dict with 'index' and 'texts'
+        # Key: session_id, Value: dict with 'vectors' and 'texts'
         self.indexes: Dict[str, Dict[str, Any]] = {}
         
-        print(f"📦 Vector store initialized with dimension: {self.dimension}")
+        print(f"📦 Lightweight Vector store initialized!")
     
     def create_index(self, session_id: str) -> None:
         """
-        Create a new FAISS index for a session.
-        
-        Args:
-            session_id: Unique identifier for the resume/session
+        Create a new entry for a session.
         """
-        # Use IndexFlatIP for inner product (cosine similarity with normalized vectors)
-        # For cosine similarity, we use Inner Product with L2 normalized vectors
-        index = self.faiss.IndexFlatIP(self.dimension)
-        
         self.indexes[session_id] = {
-            'index': index,
-            'texts': [],  # Store original texts for retrieval
-            'metadatas': []  # Store metadata if needed
+            'vectors': None,
+            'texts': [],
+            'metadatas': []
         }
-        
-        print(f"✅ Created new index for session: {session_id}")
+        print(f"✅ Created new storage for session: {session_id}")
     
     def add_texts(
         self, 
@@ -78,44 +59,28 @@ class VectorStore:
         metadatas: Optional[List[Dict]] = None
     ) -> None:
         """
-        Add texts to the vector store.
-        
-        This method:
-        1. Generates embeddings for the texts
-        2. Normalizes embeddings for cosine similarity
-        3. Adds to the FAISS index
-        
-        Args:
-            session_id: Session identifier
-            texts: List of text strings to add
-            metadatas: Optional metadata for each text
+        Add texts and generate TF-IDF embeddings.
         """
         if session_id not in self.indexes:
             self.create_index(session_id)
         
-        # Generate embeddings
-        embeddings = self.embedding_service.embed_texts(texts)
+        # Generate and store embeddings (with fit=True for initial resume processing)
+        embeddings = self.embedding_service.embed_texts(texts, fit=True)
         
-        # Normalize embeddings for cosine similarity
-        # This converts inner product to cosine similarity
+        # Normalize for easier cosine similarity later
         norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-        norms = np.where(norms == 0, 1, norms)  # Avoid division by zero
+        norms = np.where(norms == 0, 1, norms)
         normalized_embeddings = embeddings / norms
         
-        # Add to FAISS index
-        index = self.indexes[session_id]['index']
-        index.add(normalized_embeddings.astype('float32'))
-        
-        # Store original texts
+        self.indexes[session_id]['vectors'] = normalized_embeddings
         self.indexes[session_id]['texts'].extend(texts)
         
-        # Store metadata if provided
         if metadatas:
             self.indexes[session_id]['metadatas'].extend(metadatas)
         else:
             self.indexes[session_id]['metadatas'].extend([{}] * len(texts))
         
-        print(f"📝 Added {len(texts)} texts to index for session: {session_id}")
+        print(f"📝 Added {len(texts)} texts to lightweight store for session: {session_id}")
     
     def search(
         self, 
@@ -124,40 +89,31 @@ class VectorStore:
         k: int = 5
     ) -> List[Tuple[str, float]]:
         """
-        Search for similar texts in the vector store.
-        
-        Uses cosine similarity (via normalized inner product) to find
-        the most semantically similar texts to the query.
-        
-        Args:
-            session_id: Session identifier
-            query: Query text
-            k: Number of results to return (default: 5)
-            
-        Returns:
-            List of tuples (text, similarity_score) sorted by relevance
+        Search for similar texts using manual cosine similarity.
         """
-        if session_id not in self.indexes:
+        if session_id not in self.indexes or self.indexes[session_id]['vectors'] is None:
             return []
         
         # Generate query embedding
         query_embedding = self.embedding_service.embed_texts([query])
         
-        # Normalize query embedding
-        norms = np.linalg.norm(query_embedding, axis=1, keepdims=True)
-        normalized_query = query_embedding / norms
+        # Normalize query
+        norm = np.linalg.norm(query_embedding)
+        normalized_query = query_embedding / (norm if norm > 0 else 1)
         
-        # Search the index
-        index = self.indexes[session_id]['index']
-        scores, indices = index.search(normalized_query.astype('float32'), k)
+        # Calculate cosine similarity: dot product since both are normalized
+        stored_vectors = self.indexes[session_id]['vectors']
+        similarities = np.dot(stored_vectors, normalized_query.T).flatten()
+        
+        # Get top K indices
+        top_k_indices = np.argsort(similarities)[::-1][:k]
         
         # Get texts and scores
         texts = self.indexes[session_id]['texts']
         results = []
         
-        for idx, score in zip(indices[0], scores[0]):
-            if idx >= 0 and idx < len(texts):
-                results.append((texts[idx], float(score)))
+        for idx in top_k_indices:
+            results.append((texts[idx], float(similarities[idx])))
         
         return results
     
@@ -207,22 +163,15 @@ class VectorStore:
     
     def get_index_stats(self, session_id: str) -> Dict[str, Any]:
         """
-        Get statistics about an index.
-        
-        Args:
-            session_id: Session identifier
-            
-        Returns:
-            Dictionary with index statistics
+        Get statistics about a session storage.
         """
         if session_id not in self.indexes:
             return {"error": "Index not found"}
         
-        index = self.indexes[session_id]['index']
+        stored_vectors = self.indexes[session_id]['vectors']
         
         return {
             "session_id": session_id,
-            "num_vectors": index.ntotal,
-            "dimension": self.dimension,
+            "num_vectors": len(stored_vectors) if stored_vectors is not None else 0,
             "num_texts": len(self.indexes[session_id]['texts'])
         }

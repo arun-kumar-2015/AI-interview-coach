@@ -18,55 +18,50 @@ from typing import List, Union
 import numpy as np
 class EmbeddingService:
     """
-    Service for generating text embeddings using sentence-transformers.
+    Lightweight Service for generating text embeddings using TF-IDF.
     
-    Uses a lightweight but effective model for semantic similarity.
-    The model captures contextual meaning of text.
+    This replaces sentence-transformers to stay within Render's 512MB RAM limit.
     """
     
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+    def __init__(self, model_name: str = "tfidf-light"):
         """
-        Initialize the embedding service.
-        
-        Args:
-            model_name: Name of the sentence-transformer model to use
-                       'all-MiniLM-L6-v2' is a good balance of speed and quality
+        Initialize the lightweight embedding service.
         """
-        # Local import to prevent heavy loading during application startup
-        print("📥 Importing sentence_transformers (this may take a minute)...")
-        from sentence_transformers import SentenceTransformer
+        # Local import to prevent loading during app startup
+        from sklearn.feature_extraction.text import TfidfVectorizer
         
         self.model_name = model_name
-        print(f"📥 Loading embedding model: {model_name}")
-        self.model = SentenceTransformer(model_name)
-        print("✅ Embedding model loaded successfully!")
+        # Simple TF-IDF vectorizer - very low memory
+        self.vectorizer = TfidfVectorizer(
+            stop_words='english',
+            max_features=1000,
+            ngram_range=(1, 2)
+        )
+        self.fitted = False
+        print("✅ Lightweight Embedding Service (TF-IDF) initialized!")
     
-    def embed_texts(self, texts: Union[str, List[str]]) -> np.ndarray:
+    def embed_texts(self, texts: Union[str, List[str]], fit: bool = False) -> np.ndarray:
         """
-        Convert text(s) to embeddings.
-        
-        Args:
-            texts: Single text string or list of text strings
-            
-        Returns:
-            Numpy array of embeddings with shape (n_texts, embedding_dim)
+        Convert text(s) to TF-IDF vectors.
         """
         if isinstance(texts, str):
             texts = [texts]
         
-        # Generate embeddings using the sentence-transformer model
-        embeddings = self.model.encode(texts, convert_to_numpy=True)
+        if fit:
+            # First time (during upload), we fit the vectorizer to the resume content
+            embeddings = self.vectorizer.fit_transform(texts).toarray()
+            self.fitted = True
+        elif not self.fitted:
+            # Fallback if search happens before fit
+            return np.zeros((len(texts), 1000))
+        else:
+            # Subsequent searches
+            embeddings = self.vectorizer.transform(texts).toarray()
         
         return embeddings
     
     def get_embedding_dimension(self) -> int:
-        """
-        Get the dimension of the embeddings produced by this model.
-        
-        Returns:
-            Embedding dimension (384 for all-MiniLM-L6-v2)
-        """
-        return self.model.get_sentence_embedding_dimension()
+        return 1000  # Fixed based on max_features
 
 
 # For backward compatibility
