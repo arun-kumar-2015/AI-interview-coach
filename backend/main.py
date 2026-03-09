@@ -27,8 +27,16 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-print("DEBUG: main.py started")
+import os
 import sys
+
+# Ensure the backend directory is in the Python path
+# This prevents ModuleNotFoundError when running from different directories
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
+print("DEBUG: main.py started")
 print(f"DEBUG: Python path: {sys.path}")
 print(f"DEBUG: Current directory: {os.getcwd()}")
 print(f"DEBUG: Environment PORT: {os.getenv('PORT')}")
@@ -42,12 +50,18 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 # Custom imports
-from routes.upload import router as upload_router
-from routes.questions import router as questions_router
-from routes.evaluate import router as evaluate_router
-from routes.hr_questions import router as hr_questions_router
-from routes.improve import router as improve_router
-from routes.video_interview import router as video_interview_router
+try:
+    from routes.upload import router as upload_router
+    from routes.questions import router as questions_router
+    from routes.evaluate import router as evaluate_router
+    from routes.hr_questions import router as hr_questions_router
+    from routes.improve import router as improve_router
+    from routes.video_interview import router as video_interview_router
+except ImportError as e:
+    print(f"❌ CRITICAL IMPORT ERROR: {e}")
+    # We define dummy routers or handle it to at least allow the health check to pass
+    # but in reality, failure here is a deployment issue.
+    raise e
 
 # Services are accessed lazily via app_state
 pass
@@ -130,12 +144,15 @@ async def root():
 
 @app.get("/health", tags=["Health Check"])
 async def health_check():
-    """
-    Health check endpoint
-    """
+    """Health check endpoint to verify the service is running."""
+    import sys
+    import os
     return {
-        "status": "healthy",
-        "message": "API is responding"
+        "status": "healthy", 
+        "service": "AI Interview Coach API",
+        "python_version": sys.version,
+        "cwd": os.getcwd(),
+        "port": os.getenv("PORT", "8000")
     }
 
 
