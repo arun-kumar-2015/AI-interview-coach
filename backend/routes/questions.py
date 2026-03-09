@@ -25,10 +25,8 @@ from prompts.question_generator import (
     RESUME_ANALYSIS_SYSTEM_PROMPT
 )
 
-# Import services
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Import services and prompts
+pass
 
 
 router = APIRouter()

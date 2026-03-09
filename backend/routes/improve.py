@@ -23,10 +23,8 @@ from prompts.resume_improver import (
     create_ats_check_user_prompt
 )
 
-# Import services
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Import services and prompts
+pass
 
 
 router = APIRouter()

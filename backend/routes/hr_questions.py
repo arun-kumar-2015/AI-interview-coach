@@ -20,10 +20,8 @@ from prompts.hr_questions import (
     create_leadership_question_user_prompt
 )
 
-# Import services
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Import services and prompts
+pass
 
 
 router = APIRouter()

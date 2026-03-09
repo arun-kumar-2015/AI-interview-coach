@@ -26,10 +26,8 @@ from prompts.answer_evaluator import (
     create_followup_user_prompt
 )
 
-# Import services
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Import services and prompts
+pass
 
 
 router = APIRouter()
