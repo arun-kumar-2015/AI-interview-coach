@@ -5,7 +5,7 @@ import { uploadResume } from '../services/api';
 const UploadResume = ({ sessionId, onSessionCreated }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  
+
   const [file, setFile] = useState(null);
   const [jobRole, setJobRole] = useState('Software Engineer');
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,7 @@ const UploadResume = ({ sessionId, onSessionCreated }) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0];
       if (droppedFile.type === 'application/pdf') {
@@ -65,7 +65,7 @@ const UploadResume = ({ sessionId, onSessionCreated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!file) {
       setError('Please select a PDF file');
       return;
@@ -102,10 +102,10 @@ const UploadResume = ({ sessionId, onSessionCreated }) => {
           {/* Drop Zone */}
           <div
             className={`border-2 border-dashed rounded-xl p-8 text-center mb-6 transition-all duration-200 
-              ${dragActive 
-                ? 'border-primary-500 bg-primary-50' 
-                : file 
-                  ? 'border-green-500 bg-green-50' 
+              ${dragActive
+                ? 'border-primary-500 bg-primary-50'
+                : file
+                  ? 'border-green-500 bg-green-50'
                   : 'border-gray-300 hover:border-primary-400'
               }`}
             onDragEnter={handleDrag}
@@ -190,18 +190,23 @@ const UploadResume = ({ sessionId, onSessionCreated }) => {
             type="submit"
             disabled={!file || loading}
             className={`w-full py-4 rounded-lg font-semibold text-lg transition-all duration-300 
-              ${!file || loading 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              ${!file || loading
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-gradient-to-r from-primary-600 to-purple-600 text-white hover:shadow-lg transform hover:scale-[1.02]'
               }`}
           >
             {loading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing Resume...
+              <span className="flex flex-col items-center justify-center py-2">
+                <div className="flex items-center mb-2">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span className="font-bold">Analyzing Resume...</span>
+                </div>
+                <span className="text-xs opacity-80 font-normal">
+                  This takes about 10-15 seconds on the first run.
+                </span>
               </span>
             ) : (
               '🚀 Generate Interview Questions'
@@ -212,7 +217,7 @@ const UploadResume = ({ sessionId, onSessionCreated }) => {
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <h3 className="font-medium text-gray-800 mb-2">🔒 Privacy Note</h3>
             <p className="text-sm text-gray-600">
-              Your resume is processed securely and is not stored on our servers. 
+              Your resume is processed securely and is not stored on our servers.
               The AI uses your resume content only to generate personalized interview questions.
             </p>
           </div>

@@ -62,10 +62,23 @@ async def lifespan(app: FastAPI):
     """
     Lifespan context manager.
     Starts immediately to avoid Render timeouts.
-    Services load on first request.
+    Warm up services in the background.
     """
+    import threading
+    
+    def warm_up():
+        print("🔥 Warming up services in background...")
+        try:
+            get_embedding_service()
+            get_llm_service()
+            print("✨ Services warmed up successfully!")
+        except Exception as e:
+            print(f"⚠️ Warm-up warning: {e}")
+
+    # Start warm-up in a separate thread so it doesn't block Port Scan
+    threading.Thread(target=warm_up, daemon=True).start()
+    
     print("🚀 Smart AI Interview Coach Backend is READY!")
-    print(f"DEBUG: Listening on PORT: {os.getenv('PORT', '8000')}")
     yield
     print("🛑 Shutting down...")
 

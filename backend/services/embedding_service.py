@@ -27,7 +27,7 @@ class EmbeddingService:
         """
         Initialize the lightweight embedding service.
         """
-        # Local import to prevent loading during app startup
+        print("📥 Initializing TF-IDF Vectorizer...")
         from sklearn.feature_extraction.text import TfidfVectorizer
         
         self.model_name = model_name
