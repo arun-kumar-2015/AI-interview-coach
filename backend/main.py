@@ -84,22 +84,11 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    4. **Answer Evaluation**: Evaluate answers with scoring and feedback
-    5. **HR Questions**: Generate behavioral/HR questions
-    6. **Resume Improvement**: Get ATS and content improvement suggestions
-    
-    ### 🏗️ Architecture
-    
-    - **RAG Pattern**: Combines LLM capabilities with semantic search over resume content
-    - **Prompt Engineering**: Structured prompts with system/user role separation
-    - **Vector Embeddings**: Sentence-transformers for semantic similarity
-    
-    ### 📝 Note
-    
-    All endpoints return JSON responses. Check individual endpoint documentation 
-    for request/response schemas.
-    """,
-    version="1.0.0",
+    title="Smart AI Interview Coach API",
+    description="Backend API for AI-powered interview preparation",
+    version="1.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
     lifespan=lifespan
 )
 
@@ -112,21 +101,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Optional: Add a catch-all origin handler if needed, or stick to the above for security
-# For now, let's keep it specific so allow_credentials works.
-
-
 # ==================== Health Check ====================
 
 @app.get("/", tags=["Health Check"])
 async def root():
-    """
-    Root endpoint - Health check
-    """
+    """Root endpoint - Health check"""
     return {
         "status": "✅ API is running!",
         "message": "Welcome to Smart AI Interview & Resume Coach API",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "docs": "/docs"
     }
 
@@ -145,14 +128,32 @@ async def health_check():
     }
 
 
-# ==================== Include Routers ====================
+# ==================== Include Routers (Safe Discovery) ====================
 
-app.include_router(upload_router, prefix="/api", tags=["Resume Upload"])
-app.include_router(questions_router, prefix="/api", tags=["Technical Questions"])
-app.include_router(evaluate_router, prefix="/api", tags=["Answer Evaluation"])
-app.include_router(hr_questions_router, prefix="/api", tags=["HR Questions"])
-app.include_router(improve_router, prefix="/api", tags=["Resume Improvement"])
-app.include_router(video_interview_router, prefix="/api", tags=["Video Interview"])
+try:
+    from routes.upload import router as upload_router
+    app.include_router(upload_router, prefix="/api", tags=["Resume Upload"])
+    
+    from routes.questions import router as questions_router
+    app.include_router(questions_router, prefix="/api", tags=["Technical Questions"])
+    
+    from routes.evaluate import router as evaluate_router
+    app.include_router(evaluate_router, prefix="/api", tags=["Answer Evaluation"])
+    
+    from routes.hr_questions import router as hr_questions_router
+    app.include_router(hr_questions_router, prefix="/api", tags=["HR Questions"])
+    
+    from routes.improve import router as improve_router
+    app.include_router(improve_router, prefix="/api", tags=["Resume Improvement"])
+    
+    from routes.video_interview import router as video_interview_router
+    app.include_router(video_interview_router, prefix="/api", tags=["Video Interview"])
+    
+    print("✅ All routers included successfully")
+except Exception as e:
+    print(f"⚠️ Warning: Some routers failed to load: {e}")
+    # We still want the app to start so health check works
+
 
 
 # ==================== Error Handlers ====================
