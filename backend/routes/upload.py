@@ -18,11 +18,8 @@ from pydantic import BaseModel
 # Services are loaded lazily within the routes
 pass
 
-# Import main app globals
-# Note: In production, use dependency injection
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Import main app globals from same package level
+pass
 
 
 router = APIRouter()

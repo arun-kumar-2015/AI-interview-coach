@@ -9,7 +9,6 @@ Author: AI Interview Coach Team
 
 import io
 from typing import Optional, List
-from pypdf import PdfReader
 
 
 class PDFService:
@@ -29,6 +28,9 @@ class PDFService:
             Extracted text as string
         """
         try:
+            # Local import
+            from pypdf import PdfReader
+            
             # Create a BytesIO object from the file content
             pdf_file = io.BytesIO(file_content)
             
