@@ -50,18 +50,19 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 # Custom imports
-try:
-    from routes.upload import router as upload_router
-    from routes.questions import router as questions_router
-    from routes.evaluate import router as evaluate_router
-    from routes.hr_questions import router as hr_questions_router
-    from routes.improve import router as improve_router
-    from routes.video_interview import router as video_interview_router
-except ImportError as e:
-    print(f"❌ CRITICAL IMPORT ERROR: {e}")
-    # We define dummy routers or handle it to at least allow the health check to pass
-    # but in reality, failure here is a deployment issue.
-    raise e
+# The original try-except block for router imports is removed as they will be imported safely within the function.
+# try:
+#     from routes.upload import router as upload_router
+#     from routes.questions import router as questions_router
+#     from routes.evaluate import router as evaluate_router
+#     from routes.hr_questions import router as hr_questions_router
+#     from routes.improve import router as improve_router
+#     from routes.video_interview import router as video_interview_router
+# except ImportError as e:
+#     print(f"❌ CRITICAL IMPORT ERROR: {e}")
+#     # We define dummy routers or handle it to at least allow the health check to pass
+#     # but in reality, failure here is a deployment issue.
+#     raise e
 
 # Services are accessed lazily via app_state
 pass
@@ -83,18 +84,6 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="Smart AI Interview & Resume Coach API",
-    description="""
-    ## 🎯 Overview
-    
-    This API provides a comprehensive interview preparation and resume improvement 
-    system using Generative AI and RAG (Retrieval-Augmented Generation).
-    
-    ### 🔑 Key Features
-    
-    1. **Resume Processing**: Upload PDF resumes, extract text, and create embeddings
-    2. **Vector Storage**: Store resume embeddings in FAISS for semantic retrieval
-    3. **Technical Questions**: Generate personalized technical questions from resume
     4. **Answer Evaluation**: Evaluate answers with scoring and feedback
     5. **HR Questions**: Generate behavioral/HR questions
     6. **Resume Improvement**: Get ATS and content improvement suggestions
