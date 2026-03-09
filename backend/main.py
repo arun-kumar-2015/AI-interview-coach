@@ -60,25 +60,9 @@ from app_state import get_embedding_service, get_vector_store, get_llm_service, 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Lifespan context manager.
-    Starts immediately to avoid Render timeouts.
-    Warm up services in the background.
+    Simple lifespan to ensure fast port binding.
     """
-    import threading
-    
-    def warm_up():
-        print("🔥 Warming up services in background...")
-        try:
-            get_embedding_service()
-            get_llm_service()
-            print("✨ Services warmed up successfully!")
-        except Exception as e:
-            print(f"⚠️ Warm-up warning: {e}")
-
-    # Start warm-up in a separate thread so it doesn't block Port Scan
-    threading.Thread(target=warm_up, daemon=True).start()
-    
-    print("🚀 Smart AI Interview Coach Backend is READY!")
+    print("🚀 AI Interview Coach Backend starting...")
     yield
     print("🛑 Shutting down...")
 

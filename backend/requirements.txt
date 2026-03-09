@@ -9,6 +9,7 @@ pypdf>=3.17.4
 
 # Embeddings and vector storage (Lightweight)
 scikit-learn>=1.4.0
+scipy>=1.12.0
 numpy>=1.26.0
 
 # OpenAI compatible client
