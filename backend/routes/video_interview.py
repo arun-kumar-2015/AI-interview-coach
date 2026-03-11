@@ -56,14 +56,20 @@ Output your evaluation strictly as a JSON object.
 }}
 """
         
-        user_prompt = f"Question: {request.question}\nCandidate's Answer: {request.answer}"
+        import time
+        t1 = time.time()
+        print(f"⏱️ [TIMING] Starting LLM Video Evaluation...")
         
         # Use generate_json for robust parsing and correct method call
-        evaluation = await llm.generate_json(
+        # Removed 'await' because generate_json is synchronous
+        evaluation = llm.generate_json(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             temperature=0.2
         )
+        
+        t2 = time.time()
+        print(f"⏱️ [TIMING] Video Evaluation took {t2 - t1:.2f} seconds")
         
         return VideoInterviewResponse(
             confidence=int(evaluation.get("confidence", 5)),
