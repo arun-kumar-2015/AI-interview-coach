@@ -32,52 +32,43 @@ async def evaluate_video_interview(request: VideoInterviewRequest):
         llm = get_llm_service()
         
         system_prompt = f"""
-You are a professional corporate employer conducting a real-time job interview for a {request.role} position.
-Evaluate the candidate's answer based on:
-- Confidence
-- Clarity
-- Technical Accuracy
+You are a highly critical professional corporate employer conducting a real-time job interview for a {request.role} position.
+Your task is to provide an honest, accurate, and rigorous evaluation of the candidate's answer.
 
-Output your evaluation strictly as a JSON object with NO OTHER TEXT. DO NOT wrap the JSON in Markdown code blocks (e.g. no ```json).
-The JSON MUST have the following structure and precise keys:
+## Scoring Rubric (1-10):
+- **1-3 (Poor)**: Vague, incorrect, or extremely brief. Shows lack of preparation or knowledge.
+- **4-6 (Average)**: Basic understanding but lacks depth, examples, or clear structure.
+- **7-8 (Good)**: Good understanding, clear communication, and relevant examples.
+- **9-10 (Expert)**: Exceptional depth, perfect technical accuracy, highly confident, and structured (STAR method).
+
+Evaluate based on:
+1. **Confidence**: Tone (if implied by text), assertiveness, and lack of hesitation markers.
+2. **Clarity**: How easy it is to understand the explanation.
+3. **Technical Accuracy**: Correctness of technologies, concepts, and logic mentioned.
+
+Output your evaluation strictly as a JSON object.
 {{
   "confidence": <integer from 1 to 10>,
   "clarity": <integer from 1 to 10>,
   "technical_accuracy": <integer from 1 to 10>,
-  "feedback": "<A professional paragraph providing specific feedback on their answer>",
-  "improvement_tips": "<Actionable advice on how they can improve their response>"
+  "feedback": "<An honest, professional paragraph providing specific feedback on their answer>",
+  "improvement_tips": "<Specific, actionable advice on how they can improve their response>"
 }}
 """
         
         user_prompt = f"Question: {request.question}\nCandidate's Answer: {request.answer}"
         
-        response_text = await llm.generate_response(
+        # Use generate_json for robust parsing and correct method call
+        evaluation = await llm.generate_json(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            temperature=0.3
+            temperature=0.2
         )
         
-        # In a robust implementation, we might use openai function calling, 
-        # but parsing stringified dict works for basic models.
-        import json
-        
-        # Clean the response to ensure it's just JSON (sometimes models still add markdown blocks despite instructions)
-        clean_text = response_text.strip()
-        if clean_text.startswith("```json"):
-            clean_text = clean_text[7:]
-        if clean_text.startswith("```"):
-            clean_text = clean_text[3:]
-        if clean_text.endswith("```"):
-            clean_text = clean_text[:-3]
-            
-        clean_text = clean_text.strip()
-            
-        evaluation = json.loads(clean_text)
-        
         return VideoInterviewResponse(
-            confidence=evaluation.get("confidence", 5),
-            clarity=evaluation.get("clarity", 5),
-            technical_accuracy=evaluation.get("technical_accuracy", 5),
+            confidence=int(evaluation.get("confidence", 5)),
+            clarity=int(evaluation.get("clarity", 5)),
+            technical_accuracy=int(evaluation.get("technical_accuracy", 5)),
             feedback=evaluation.get("feedback", "No specific feedback generated."),
             improvement_tips=evaluation.get("improvement_tips", "No specific tips generated.")
         )
