@@ -78,7 +78,11 @@ function App() {
             <Route
               path="/video-interview"
               element={
-                <VideoInterviewPage />
+                sessionId ? (
+                  <VideoInterviewPage sessionId={sessionId} />
+                ) : (
+                  <Navigate to="/upload" replace />
+                )
               }
             />
             <Route

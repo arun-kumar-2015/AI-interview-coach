@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Timer from './Timer';
 import InterviewFeedback from './InterviewFeedback';
+import { generateTechnicalQuestions } from '../services/api';
 
 // A mock list of questions for the demo. In a real app, these could be fetched from the backend.
 const MOCK_QUESTIONS = {
@@ -26,11 +27,13 @@ const MOCK_QUESTIONS = {
     ]
 };
 
-const VideoInterview = () => {
-    const [role, setRole] = useState('Software Developer');
+const VideoInterview = ({ sessionId }) => {
+    const [role, setRole] = useState('Software Engineer'); // Changed default to generic tech role
     const [isInterviewStarted, setIsInterviewStarted] = useState(false);
     const [isInterviewFinished, setIsInterviewFinished] = useState(false);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [dynamicQuestions, setDynamicQuestions] = useState([]);
+    const [isFetchingQuestions, setIsFetchingQuestions] = useState(false);
 
     const [isRecording, setIsRecording] = useState(false);
     const [transcript, setTranscript] = useState('');
@@ -82,9 +85,13 @@ const VideoInterview = () => {
     // Speak the question text whenever a new question is displayed
     useEffect(() => {
         if (isInterviewStarted && !currentFeedback && !isInterviewFinished) {
-            speakQuestion(MOCK_QUESTIONS[role][currentQuestionIndex]);
+            const currentQuestionsList = dynamicQuestions.length > 0 ? dynamicQuestions : (MOCK_QUESTIONS[role] || MOCK_QUESTIONS['Software Developer']);
+            const questionText = currentQuestionsList[currentQuestionIndex];
+            if (questionText) {
+                speakQuestion(typeof questionText === 'string' ? questionText : questionText.question);
+            }
         }
-    }, [isInterviewStarted, currentQuestionIndex, currentFeedback, isInterviewFinished, role]);
+    }, [isInterviewStarted, currentQuestionIndex, currentFeedback, isInterviewFinished, role, dynamicQuestions]);
 
     const speakQuestion = (text) => {
         if ('speechSynthesis' in window) {
@@ -116,6 +123,23 @@ const VideoInterview = () => {
                 videoRef.current.srcObject = stream;
             }
             streamRef.current = stream;
+
+            // Fetch dynamic questions if we have a session
+            if (sessionId) {
+                setIsFetchingQuestions(true);
+                try {
+                    console.log(`🔍 Fetching personalized questions for role: ${role}`);
+                    const response = await generateTechnicalQuestions(sessionId, role, 5);
+                    if (response.questions && response.questions.length > 0) {
+                        setDynamicQuestions(response.questions.map(q => q.question));
+                    }
+                } catch (err) {
+                    console.error("Error fetching dynamic questions, falling back to mock:", err);
+                } finally {
+                    setIsFetchingQuestions(false);
+                }
+            }
+
             setIsInterviewStarted(true);
             setCurrentQuestionIndex(0);
             setTranscript('');
@@ -148,7 +172,8 @@ const VideoInterview = () => {
         }
 
         setIsLoadingFeedback(true);
-        const question = MOCK_QUESTIONS[role][currentQuestionIndex];
+        const currentQuestionsList = dynamicQuestions.length > 0 ? dynamicQuestions : (MOCK_QUESTIONS[role] || MOCK_QUESTIONS['Software Developer']);
+        const question = currentQuestionsList[currentQuestionIndex];
 
         const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
         try {
@@ -183,7 +208,8 @@ const VideoInterview = () => {
     };
 
     const nextQuestion = () => {
-        if (currentQuestionIndex < MOCK_QUESTIONS[role].length - 1) {
+        const currentQuestionsList = dynamicQuestions.length > 0 ? dynamicQuestions : (MOCK_QUESTIONS[role] || MOCK_QUESTIONS['Software Developer']);
+        if (currentQuestionIndex < currentQuestionsList.length - 1) {
             setCurrentQuestionIndex(prev => prev + 1);
             setCurrentFeedback(null);
             setTranscript('');
@@ -211,7 +237,8 @@ const VideoInterview = () => {
         if (allFeedbacks.length === 0) return 0;
         const total = allFeedbacks.reduce((acc, curr) =>
             acc + curr.confidence + curr.clarity + curr.technical_accuracy, 0);
-        const maxScore = allFeedbacks.length * 30; // 3 attributes * 10
+        const currentQuestionsList = dynamicQuestions.length > 0 ? dynamicQuestions : (MOCK_QUESTIONS[role] || MOCK_QUESTIONS['Software Developer']);
+        const maxScore = currentQuestionsList.length * 30; // 3 attributes * 10
         return Math.round((total / maxScore) * 100);
     };
 
@@ -234,18 +261,21 @@ const VideoInterview = () => {
 
                 <div className="space-y-6">
                     <h3 className="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">Feedback Summary</h3>
-                    {allFeedbacks.map((fb, idx) => (
-                        <div key={idx} className="bg-gray-800 rounded-lg p-5 border border-gray-700">
-                            <h4 className="font-bold text-gray-200 mb-2">Q{idx + 1}: {MOCK_QUESTIONS[role][idx]}</h4>
-                            <div className="flex space-x-4 mb-3 text-sm">
-                                <span className="bg-gray-900 px-3 py-1 rounded-full text-blue-300">Confidence: {fb.confidence}/10</span>
-                                <span className="bg-gray-900 px-3 py-1 rounded-full text-green-300">Clarity: {fb.clarity}/10</span>
-                                <span className="bg-gray-900 px-3 py-1 rounded-full text-purple-300">Tech: {fb.technical_accuracy}/10</span>
+                    {allFeedbacks.map((fb, idx) => {
+                        const currentQuestionsList = dynamicQuestions.length > 0 ? dynamicQuestions : (MOCK_QUESTIONS[role] || MOCK_QUESTIONS['Software Developer']);
+                        return (
+                            <div key={idx} className="bg-gray-800 rounded-lg p-5 border border-gray-700">
+                                <h4 className="font-bold text-gray-200 mb-2">Q{idx + 1}: {currentQuestionsList[idx]}</h4>
+                                <div className="flex space-x-4 mb-3 text-sm">
+                                    <span className="bg-gray-900 px-3 py-1 rounded-full text-blue-300">Confidence: {fb.confidence}/10</span>
+                                    <span className="bg-gray-900 px-3 py-1 rounded-full text-green-300">Clarity: {fb.clarity}/10</span>
+                                    <span className="bg-gray-900 px-3 py-1 rounded-full text-purple-300">Tech: {fb.technical_accuracy}/10</span>
+                                </div>
+                                <p className="text-gray-400 text-sm italic mb-2">"{fb.feedback}"</p>
+                                <p className="text-blue-400 text-sm font-medium">💡 Tip: {fb.improvement_tips}</p>
                             </div>
-                            <p className="text-gray-400 text-sm italic mb-2">"{fb.feedback}"</p>
-                            <p className="text-blue-400 text-sm font-medium">💡 Tip: {fb.improvement_tips}</p>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 <div className="mt-8 flex justify-center">
@@ -296,9 +326,18 @@ const VideoInterview = () => {
 
                 {!isInterviewStarted ? (
                     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-900/80 backdrop-blur-sm rounded-b-2xl">
-                        <div className="text-6xl mb-4 animate-bounce">🎥</div>
-                        <h2 className="text-2xl text-white font-bold mb-2">Ready for your interview?</h2>
-                        <p className="text-gray-400 text-center max-w-md">Select your role and click start. Make sure your camera and microphone are connected and allowed.</p>
+                        {isFetchingQuestions ? (
+                            <div className="flex flex-col items-center">
+                                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                                <p className="text-white font-bold">Generating personalized questions from your resume...</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="text-6xl mb-4 animate-bounce">🎥</div>
+                                <h2 className="text-2xl text-white font-bold mb-2">Ready for your interview?</h2>
+                                <p className="text-gray-400 text-center max-w-md">Select your role and click start. We'll use your resume to ask relevant questions.</p>
+                            </>
+                        )}
                     </div>
                 ) : null}
 
@@ -309,11 +348,19 @@ const VideoInterview = () => {
                     <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-5 shadow-lg relative overflow-hidden group">
                         <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
                         <div className="flex justify-between items-start mb-2">
-                            <span className="text-blue-300 font-bold text-sm tracking-wider uppercase">Question {currentQuestionIndex + 1} of {MOCK_QUESTIONS[role].length}</span>
+                            {(() => {
+                                const currentQuestionsList = dynamicQuestions.length > 0 ? dynamicQuestions : (MOCK_QUESTIONS[role] || MOCK_QUESTIONS['Software Developer']);
+                                return (
+                                    <span className="text-blue-300 font-bold text-sm tracking-wider uppercase">Question {currentQuestionIndex + 1} of {currentQuestionsList.length}</span>
+                                );
+                            })()}
                             <Timer initialSeconds={60} isActive={isInterviewStarted && !currentFeedback && !isLoadingFeedback} onTimeUp={handleTimeUp} />
                         </div>
                         <h3 className="text-2xl font-medium text-white leading-relaxed animate-[fadeIn_0.5s_ease-out]">
-                            "{MOCK_QUESTIONS[role][currentQuestionIndex]}"
+                            "{(() => {
+                                const currentQuestionsList = dynamicQuestions.length > 0 ? dynamicQuestions : (MOCK_QUESTIONS[role] || MOCK_QUESTIONS['Software Developer']);
+                                return currentQuestionsList[currentQuestionIndex];
+                            })()}"
                         </h3>
                     </div>
 
@@ -391,7 +438,10 @@ const VideoInterview = () => {
                                     onClick={nextQuestion}
                                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-[0_0_15px_rgba(22,163,74,0.4)]"
                                 >
-                                    {currentQuestionIndex < MOCK_QUESTIONS[role].length - 1 ? 'Next Question' : 'Finish'}
+                                    {(() => {
+                                        const currentQuestionsList = dynamicQuestions.length > 0 ? dynamicQuestions : (MOCK_QUESTIONS[role] || MOCK_QUESTIONS['Software Developer']);
+                                        return currentQuestionIndex < currentQuestionsList.length - 1 ? 'Next Question' : 'Finish';
+                                    })()}
                                 </button>
                             )}
                         </div>

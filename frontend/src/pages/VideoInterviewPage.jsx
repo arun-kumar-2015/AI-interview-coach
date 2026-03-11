@@ -1,10 +1,10 @@
 import React from 'react';
 import VideoInterview from '../components/VideoInterview';
 
-const VideoInterviewPage = () => {
+const VideoInterviewPage = ({ sessionId }) => {
     return (
         <div className="animate-fade-in">
-            <VideoInterview />
+            <VideoInterview sessionId={sessionId} />
         </div>
     );
 };
