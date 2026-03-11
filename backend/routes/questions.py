@@ -14,6 +14,7 @@ Author: AI Interview Coach Team
 """
 
 from typing import Optional, List
+import time
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
@@ -125,12 +126,16 @@ async def generate_technical_questions(request: QuestionGenerationRequest):
         
         # Generate questions using LLM
         # Using medium temperature (0.5-0.7) for diverse but relevant questions
+        t1 = time.time()
+        print(f"⏱️ [TIMING] Starting LLM Question Generation ({request.num_questions} questions)...")
         response = llm_service.generate_json(
             system_prompt=TECHNICAL_QUESTION_SYSTEM_PROMPT,
             user_prompt=user_prompt,
             temperature=0.6,
             max_tokens=4000
         )
+        t2 = time.time()
+        print(f"⏱️ [TIMING] LLM Question Generation took {t2 - t1:.2f} seconds")
         
         # Parse response
         questions_data = response if isinstance(response, list) else response.get('questions', [])

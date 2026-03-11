@@ -11,6 +11,7 @@ Author: AI Interview Coach Team
 """
 
 import uuid
+import time
 from typing import Optional
 from fastapi import APIRouter, UploadFile, File, HTTPException, status
 from pydantic import BaseModel
@@ -89,10 +90,14 @@ async def upload_resume(
                 detail="File too large. Maximum size is 10MB."
             )
         
+        
         # Extract text from PDF
-        print(f"📄 Extracting text from PDF: {file.filename}")
+        t1 = time.time()
+        print(f"⏱️ [TIMING] Starting PDF Extraction: {file.filename}")
         from services.pdf_service import PDFService
         raw_text = PDFService.extract_text_from_pdf(file_content)
+        t2 = time.time()
+        print(f"⏱️ [TIMING] PDF Extraction took {t2 - t1:.2f} seconds")
         
         if not raw_text or len(raw_text.strip()) < 100:
             raise HTTPException(
@@ -103,17 +108,24 @@ async def upload_resume(
         # Clean and preprocess text
         print(f"🧹 Cleaning and preprocessing text...")
         cleaned_text = PDFService.clean_text(raw_text)
+        t3 = time.time()
+        print(f"⏱️ [TIMING] Text Cleaning took {t3 - t2:.2f} seconds")
         
         # Split into sections
         sections = PDFService.split_into_sections(cleaned_text)
+        t4 = time.time()
+        print(f"⏱️ [TIMING] Section Splitting took {t4 - t3:.2f} seconds")
         
         # Get global services from main app
         # Note: In production, use proper dependency injection
         # Get global services from app_state
         from app_state import get_vector_store, get_embedding_service, resumes_db
         
+        t5 = time.time()
         vector_store = get_vector_store()
         embedding_service = get_embedding_service()
+        t6 = time.time()
+        print(f"⏱️ [TIMING] Initializing Services took {t6 - t5:.2f} seconds")
         
         if not vector_store or not embedding_service:
             raise HTTPException(
@@ -138,7 +150,11 @@ async def upload_resume(
         texts_to_embed.append(cleaned_text)
         
         # Add to vector store
+        t7 = time.time()
+        print(f"⏱️ [TIMING] Starting Vector Embedding and Storage ({len(texts_to_embed)} chunks)...")
         vector_store.add_texts(session_id, texts_to_embed)
+        t8 = time.time()
+        print(f"⏱️ [TIMING] Vector Embedding took {t8 - t7:.2f} seconds")
         
         # Store resume data in memory
         resumes_db[session_id] = {
@@ -154,6 +170,7 @@ async def upload_resume(
         preview = PDFService.get_text_preview(cleaned_text, max_length=500)
         
         print(f"✅ Resume processed successfully for session: {session_id}")
+        print(f"⏱️ [TIMING] Total Processing Time: {time.time() - t1:.2f} seconds")
         
         return UploadResponse(
             session_id=session_id,
