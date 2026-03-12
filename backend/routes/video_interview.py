@@ -60,6 +60,8 @@ Output your evaluation strictly as a JSON object.
         t1 = time.time()
         print(f"⏱️ [TIMING] Starting LLM Video Evaluation...")
         
+        user_prompt = f"Question: {request.question}\nCandidate's Answer: {request.answer}"
+        
         # Use generate_json for robust parsing and correct method call
         # Removed 'await' because generate_json is synchronous
         evaluation = llm.generate_json(
@@ -70,13 +72,20 @@ Output your evaluation strictly as a JSON object.
         
         t2 = time.time()
         print(f"⏱️ [TIMING] Video Evaluation took {t2 - t1:.2f} seconds")
+
+        # Helper to get keys case-insensitively
+        def get_val(data, target_key, default):
+            for k, v in data.items():
+                if k.lower() == target_key.lower():
+                    return v
+            return default
         
         return VideoInterviewResponse(
-            confidence=int(evaluation.get("confidence", 5)),
-            clarity=int(evaluation.get("clarity", 5)),
-            technical_accuracy=int(evaluation.get("technical_accuracy", 5)),
-            feedback=evaluation.get("feedback", "No specific feedback generated."),
-            improvement_tips=evaluation.get("improvement_tips", "No specific tips generated.")
+            confidence=int(get_val(evaluation, "confidence", 5)),
+            clarity=int(get_val(evaluation, "clarity", 5)),
+            technical_accuracy=int(get_val(evaluation, "technical_accuracy", 5)),
+            feedback=get_val(evaluation, "feedback", "No specific feedback generated."),
+            improvement_tips=get_val(evaluation, "improvement_tips", "No specific tips generated.")
         )
 
     except json.JSONDecodeError as e:
