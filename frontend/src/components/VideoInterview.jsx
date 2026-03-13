@@ -24,11 +24,13 @@ const MOCK_QUESTIONS = {
         "How do you measure the success of a digital marketing campaign?",
         "Describe a time a campaign failed and what you learned from it.",
         "What is your approach to managing a marketing budget?"
-    ]
+    ],
+    'Others': []
 };
 
 const VideoInterview = ({ sessionId }) => {
     const [role, setRole] = useState('Software Engineer'); // Changed default to generic tech role
+    const [customRole, setCustomRole] = useState('');
     const [isInterviewStarted, setIsInterviewStarted] = useState(false);
     const [isInterviewFinished, setIsInterviewFinished] = useState(false);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -128,8 +130,9 @@ const VideoInterview = ({ sessionId }) => {
             if (sessionId) {
                 setIsFetchingQuestions(true);
                 try {
-                    console.log(`🔍 Fetching personalized questions for role: ${role}`);
-                    const response = await generateTechnicalQuestions(sessionId, role, 5);
+                    const finalRole = role === 'Others' ? customRole : role;
+                    console.log(`🔍 Fetching personalized questions for role: ${finalRole}`);
+                    const response = await generateTechnicalQuestions(sessionId, finalRole, 5);
                     if (response.questions && response.questions.length > 0) {
                         setDynamicQuestions(response.questions.map(q => q.question));
                     }
@@ -177,11 +180,12 @@ const VideoInterview = ({ sessionId }) => {
 
         const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
         try {
+            const finalRole = role === 'Others' ? customRole : role;
             const response = await fetch(`${API_BASE_URL}/api/video-interview`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    role: role,
+                    role: finalRole,
                     question: question,
                     answer: transcript || "No answer provided visually or audibly."
                 })
@@ -303,20 +307,41 @@ const VideoInterview = ({ sessionId }) => {
                 </div>
 
                 {!isInterviewStarted && (
-                    <div className="flex space-x-4">
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
-                        >
-                            {Object.keys(MOCK_QUESTIONS).map(r => <option key={r} value={r}>{r}</option>)}
-                        </select>
-                        <button
-                            onClick={startInterview}
-                            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-green-500/30 transition-all transform hover:scale-105"
-                        >
-                            Start Interview
-                        </button>
+                    <div className="flex flex-col space-y-4">
+                        <div className="flex space-x-4">
+                            <select
+                                value={role}
+                                onChange={(e) => {
+                                    setRole(e.target.value);
+                                    if (e.target.value !== 'Others') setCustomRole('');
+                                }}
+                                className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
+                            >
+                                <option value="Software Engineer">Software Engineer</option>
+                                <option value="Data Analyst">Data Analyst</option>
+                                <option value="HR">HR</option>
+                                <option value="Marketing Manager">Marketing Manager</option>
+                                <option value="Others">Others (Custom)</option>
+                            </select>
+                            <button
+                                onClick={startInterview}
+                                disabled={role === 'Others' && !customRole.trim()}
+                                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-green-500/30 transition-all transform hover:scale-105"
+                            >
+                                Start Interview
+                            </button>
+                        </div>
+                        {role === 'Others' && (
+                            <div className="animate-fade-in">
+                                <input
+                                    type="text"
+                                    placeholder="Enter your target job role (e.g. Graphic Designer)"
+                                    value={customRole}
+                                    onChange={(e) => setCustomRole(e.target.value)}
+                                    className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 shadow-inner"
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
